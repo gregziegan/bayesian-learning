@@ -43,10 +43,11 @@ def get_stratified_folds(data, number_of_tests):
     return stratified_folds
 
 
-def train_async(data, number_of_tests, algorithm_class, m_estimate):
+def train_async(data, schema, number_of_tests, algorithm_class, m_estimate):
     """
     :param data: data set to learn
     :type data: ndarray
+    :param schema: data schema to determine nominal or continuous
     :param number_of_tests: how many tests to perform/threads to spawn
     :type number_of_tests: int
     :param m_estimate: m estimate for smoothing
@@ -62,7 +63,7 @@ def train_async(data, number_of_tests, algorithm_class, m_estimate):
         algorithm_instance = algorithm_class(m_estimate)
         t = threading.Thread(
             target=train_and_classify,
-            args=(algorithm_instance, training_set, validation_set, q, thread_id)
+            args=(algorithm_instance, training_set, validation_set, schema, q, thread_id)
         )
         t.daemon = True
         t.start()
@@ -90,7 +91,7 @@ def get_usable_data_and_class_labels(data):
     return usable_data, class_labels
 
 
-def train_and_classify(algorithm_instance, training_set, validation_set, q, thread_id):
+def train_and_classify(algorithm_instance, training_set, validation_set, schema, q, thread_id):
     """
     Trains and tests a set of data and stores its result to a queue.
 
@@ -101,7 +102,7 @@ def train_and_classify(algorithm_instance, training_set, validation_set, q, thre
     """
 
     training_data, class_labels = get_usable_data_and_class_labels(training_set)
-    algorithm_instance.train(training_data, class_labels)
+    algorithm_instance.train(training_data, class_labels, schema)
 
     validation_data, class_labels = get_usable_data_and_class_labels(validation_set)
     predictions = algorithm_instance.classify(validation_data)
