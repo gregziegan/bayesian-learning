@@ -49,7 +49,7 @@ class NaiveBayes(object):
             if feature.type == 'CONTINUOUS':
                 feature_prob_summary = self.train_continuous_feature(feature_set, class_labels)
             else:
-                feature_prob_summary = self.train_nominal_feature(feature_set, class_labels, feature.values, self.m_estimate)
+                feature_prob_summary = self.train_nominal_feature(feature_set, class_labels, feature.values)
 
             self._feature_probabilities.append(feature_prob_summary)
 
@@ -86,14 +86,12 @@ class NaiveBayes(object):
 
         return estimate, certainty
 
-    @staticmethod
-    def train_nominal_feature(feature_set, labels, nominal_values, m_estimate):
+    def train_nominal_feature(self, feature_set, labels, nominal_values):
         """
         Returns the probabilities of a class label associated with examples of a nominal feature.
         :param feature_set: contains all the values in the training set for a particular feature
         :param labels: an array of class labels (1.0 or -1.0)
         :param nominal_values:
-        :param m_estimate:
         :return: a dictionary mapping nominal value keys to values containing the positive/negative label counts
         and a conditional probability function
         :rtype: dict
@@ -111,7 +109,7 @@ class NaiveBayes(object):
                 neg_bin[feature_value] += 1
                 num_neg_class += 1.0
 
-        m = NaiveBayes.get_smoothing_estimate(m_estimate, len(nominal_values))
+        m = NaiveBayes.get_smoothing_estimate(self.m_estimate, len(nominal_values))
         prior = 1 / float(len(nominal_values))
 
         for nominal_value in nominal_values:
