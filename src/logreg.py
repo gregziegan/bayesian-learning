@@ -1,7 +1,6 @@
 import argparse
 from mldata import parse_c45
 import numpy as np
-from numpy import ndarray
 import os
 from scipy.optimize import fmin_powell
 import training
@@ -66,7 +65,7 @@ class LogisticRegression(object):
         initial_weights = get_random_initial_weights(examples)
         self._minimize_log_regression_func(examples, labels, initial_weights)
 
-    def predict(self, example):
+    def predict_example(self, example):
         """
 
         :param example:
@@ -78,7 +77,7 @@ class LogisticRegression(object):
         return prediction, certainty
 
     def classify(self, validation_set):
-        return map(self.predict, validation_set)
+        return map(self.predict_example, validation_set)
 
 
 if __name__ == "__main__":

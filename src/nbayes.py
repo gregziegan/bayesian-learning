@@ -16,7 +16,7 @@ class NaiveBayes(object):
 
         self._prob_pos_y = 0.0
         self._prob_neg_y = 0.0
-        self._feature_probabilities = []
+        self._feature_probabilities = []  # will contain 2-tuples, each with the probabilities of y|xi and -y|xi
 
     @classmethod
     @timing
@@ -24,6 +24,16 @@ class NaiveBayes(object):
         return training.train_async(data, 5, cls, m_estimate, schema=schema)
 
     def train(self, examples, class_labels, schema):
+        """
+        Populates the list of feature probabilities.
+        :param examples: training data, an array of feature arrays
+        :type examples: ndarray
+        :param class_labels: true labels associated with training data (1.0 or -1.0)
+        :type class_labels: ndarray
+        :param schema: object that contains meta information like the feature's type
+        :type schema: Schema
+        :return:
+        """
         num_pos_labels = 0
         for label in class_labels:
             num_pos_labels += 1 if label > 0 else 0
@@ -44,9 +54,20 @@ class NaiveBayes(object):
             self._feature_probabilities.append(feature_prob_summary)
 
     def classify(self, validation_data):
+        """
+        Returns a list of predictions on unlabeled data.
+        :type validation_data: ndarray
+        :return:
+        """
         return map(self.predict_example, validation_data)
 
     def predict_example(self, example):
+        """
+        Predicts a new example using the probabilities stored in this instance's feature probabilities list.
+        :param example: feature array
+        :type example: ndarray
+        :return:
+        """
         pos_prob = log(self._prob_pos_y)
         neg_prob = log(self._prob_neg_y)
 
@@ -67,6 +88,16 @@ class NaiveBayes(object):
 
     @staticmethod
     def train_nominal_feature(feature_set, labels, nominal_values, m_estimate):
+        """
+        Returns the probabilities of a class label associated with examples of a nominal feature.
+        :param feature_set: contains all the values in the training set for a particular feature
+        :param labels: an array of class labels (1.0 or -1.0)
+        :param nominal_values:
+        :param m_estimate:
+        :return: a dictionary mapping nominal value keys to values containing the positive/negative label counts
+        and a conditional probability function
+        :rtype: dict
+        """
         pos_bin = {v: 0 for v in nominal_values}
         neg_bin = {v: 0 for v in nominal_values}
 
@@ -97,6 +128,13 @@ class NaiveBayes(object):
 
     @staticmethod
     def train_continuous_feature(feature_set, labels):
+        """
+        Returns the probabilities/statistics of a class label associated with examples of a continuous feature.
+        :param feature_set: contains all the values in the training set for a particular feature
+        :param labels: an array of class labels (1.0 or -1.0)
+        :return: a dictionary containing a conditional probability function closure and various statistical information.
+        :rtype: dict
+        """
         positive_bin, negative_bin = [], []
 
         num_pos_class, num_neg_class = 0.0, 0.0
@@ -118,12 +156,19 @@ class NaiveBayes(object):
         pos_variance = 0.01 if pos_variance < .01 else pos_variance
         neg_variance = 0.01 if neg_variance < .01 else neg_variance
 
-        summary = locals()
+        summary = locals()  # places all variables in this scope into a dictionary
         summary['get_conditional_prob'] = lambda e: NaiveBayes.get_continuous_conditional_probability(e, summary)
         return summary
 
     @staticmethod
     def get_continuous_conditional_probability(feature_value, summary):
+        """
+        Returns positive and negative probabilities using a gaussian distribution
+        :param feature_value:
+        :param summary: dictionary containing positive and negative class label mean and variance
+        :return: tuple of positive and negative probabilities
+        :rtype: tuple
+        """
         pos_mu, neg_mu = summary['pos_mean'], summary['neg_mean']
         pos_sig2, neg_sig2 = summary['pos_variance'], summary['neg_variance']
         prob_pos = 1 / (2 * pi * pos_sig2)**0.5 * exp(-0.5 * (feature_value - pos_mu)**2 / pos_sig2)
@@ -132,6 +177,12 @@ class NaiveBayes(object):
 
     @staticmethod
     def get_smoothing_estimate(m_estimate, number_of_values):
+        """
+        Returns a Laplace smoothing estimate if m_estimate is negative
+        :param m_estimate:
+        :param number_of_values:
+        :return:
+        """
         if m_estimate < 0:
             return number_of_values
         else:
