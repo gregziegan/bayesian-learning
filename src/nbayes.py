@@ -16,7 +16,7 @@ class NaiveBayes(object):
 
         self._prob_pos_y = 0.0
         self._prob_neg_y = 0.0
-        self._tree_nodes = []
+        self._feature_probabilities = []
 
     @classmethod
     @timing
@@ -37,11 +37,11 @@ class NaiveBayes(object):
             feature_set = [example[feature_index] for example in examples]
 
             if feature.type == 'CONTINUOUS':
-                node = self.train_continuous_feature(feature_set, class_labels)
+                feature_prob_summary = self.train_continuous_feature(feature_set, class_labels)
             else:
-                node = self.train_nominal_feature(feature_set, class_labels, feature.values, self.m_estimate)
+                feature_prob_summary = self.train_nominal_feature(feature_set, class_labels, feature.values, self.m_estimate)
 
-            self._tree_nodes.append(node)
+            self._feature_probabilities.append(feature_prob_summary)
 
     def classify(self, validation_data):
         return map(self.predict_example, validation_data)
@@ -51,16 +51,16 @@ class NaiveBayes(object):
         neg_prob = log(self._prob_neg_y)
 
         for feature_index, feature_value in enumerate(example):
-            get_conditional_prob_func = self._tree_nodes[feature_index]['get_conditional_prob']
+            get_conditional_prob_func = self._feature_probabilities[feature_index]['get_conditional_prob']
             conditional_prob_pos, conditional_prob_neg = get_conditional_prob_func(feature_value)
 
             if conditional_prob_pos > 0:
                 pos_prob += log(conditional_prob_pos)
 
-            if neg_prob > 0:
+            if conditional_prob_neg > 0:
                 neg_prob += log(conditional_prob_neg)
 
-        estimate = pos_prob > neg_prob
+        estimate = 1.0 if pos_prob > neg_prob else -1.0
         certainty = pos_prob
 
         return estimate, certainty
@@ -146,6 +146,7 @@ if __name__ == '__main__':
     example_set = parse_c45(args.data_file_name, DATA_DIRECTORY)
     data_set = np.array(example_set.to_float())
     for feature in example_set.schema[1:-1]:
-        feature.values = tuple([feature.to_float(value) for value in feature.values])
+        if feature.type == 'NOMINAL':
+            feature.values = tuple([feature.to_float(value) for value in feature.values])
     results = NaiveBayes.solve(data_set, example_set.schema[1:-1], args.m_estimate)
     print_performance(results)

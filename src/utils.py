@@ -44,7 +44,8 @@ def print_performance(results):
     accuracies, precisions, recalls = [], [], []
     for result in results:
         predictions, class_labels = result['predictions'], result['class_labels']
-        for prediction, class_label in zip(predictions, class_labels):
+        for prediction_tuple, class_label in zip(predictions, class_labels):
+            prediction, certainty = prediction_tuple
             if prediction > 0:
                 if class_label > 0:
                     num_true_positives += 1
