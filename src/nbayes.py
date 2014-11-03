@@ -21,7 +21,7 @@ class NaiveBayes(object):
     @classmethod
     @timing
     def solve(cls, data, schema, m_estimate):
-        return training.train_async(data, schema, 5, cls, m_estimate)
+        return training.train_async(data, 5, cls, m_estimate, schema=schema)
 
     def train(self, examples, class_labels, schema):
         num_pos_labels = 0

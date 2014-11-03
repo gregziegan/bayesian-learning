@@ -2,6 +2,10 @@ import time
 import numpy as np
 
 
+def get_random_initial_weights(examples):
+    return np.random.rand(examples.shape[1] + 1) * .001
+
+
 def timing(f):
     def wrap(*args):
         time1 = time.time()

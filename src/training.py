@@ -43,15 +43,15 @@ def get_stratified_folds(data, number_of_tests):
     return stratified_folds
 
 
-def train_async(data, schema, number_of_tests, algorithm_class, m_estimate):
+def train_async(data, number_of_tests, algorithm_class, constant_term, schema=None):
     """
     :param data: data set to learn
     :type data: ndarray
-    :param schema: data schema to determine nominal or continuous
     :param number_of_tests: how many tests to perform/threads to spawn
     :type number_of_tests: int
-    :param m_estimate: m estimate for smoothing
-    :type m_estimate: float
+    :param constant_term: m estimate for smoothing
+    :type constant_term: float
+    :param schema: data schema to determine nominal or continuous, necessary for naive bayes
     :return:
     """
     q = Queue()
@@ -60,7 +60,7 @@ def train_async(data, schema, number_of_tests, algorithm_class, m_estimate):
     threads = []
     thread_id = 0
     for training_set, validation_set in get_stratified_cross_validation_sets(data, number_of_tests):
-        algorithm_instance = algorithm_class(m_estimate)
+        algorithm_instance = algorithm_class(constant_term)
         t = threading.Thread(
             target=train_and_classify,
             args=(algorithm_instance, training_set, validation_set, schema, q, thread_id)

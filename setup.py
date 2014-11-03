@@ -10,5 +10,5 @@ setup(
     author='Greg Ziegan, MJ Harkins',
     author_email='greg.ziegan@gmail.com, mph47@case.edu',
     description='',
-    requires=['numpy']
+    requires=['numpy', 'scipy']
 )
