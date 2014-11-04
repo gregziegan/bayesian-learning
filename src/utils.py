@@ -64,10 +64,6 @@ def contingency_table(predictions, class_labels, threshold):
 
 def print_performance(results):
     num_true_positives, num_false_positives, num_true_negatives, num_false_negatives = 0.0, 0.0, 0.0, 0.0
-    tp = []
-    tn = []
-    fp = []
-    fn = []
     fp_rate = [0.0]
     tp_rate = [0.0]
     accuracies, precisions, recalls = [], [], []
@@ -89,10 +85,6 @@ def print_performance(results):
                     num_true_negatives += 1
                 else:
                     num_false_negatives += 1
-            tp.append(num_true_positives)
-            tn.append(num_true_negatives)
-            fp.append(num_false_positives)
-            fn.append(num_false_negatives)
 
             accuracies.append(get_accuracy(num_true_positives, num_false_positives,
                                            num_true_negatives, num_false_negatives))
