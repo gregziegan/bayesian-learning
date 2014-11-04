@@ -4,7 +4,7 @@ import numpy as np
 import os
 from scipy.optimize import fmin_powell
 import training
-from utils import print_performance, timing, get_random_initial_weights
+from utils import print_performance, timing, get_random_initial_weights, normalize
 
 DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), '../data/')
 
@@ -16,27 +16,29 @@ class LogisticRegression(object):
 
         self._mean = 0
         self._std = 0
-        self._trained_weight_vector = None
+        self._optimal_weight_vector = None
 
     @classmethod
     @timing
     def solve(cls, data, c):
         return training.train_async(data, 5, cls, c)
 
-    def _conditional_log_likelihood(self, example, label, weights):
+    @staticmethod
+    def _conditional_log_likelihood(example, label, weights):
         """
-
+        Returns the likelihood term for an given example.
         :param example:
         :type example: ndarray
         :param label:
         :param weights:
         :return:
         """
-        norm_example = self._normalize(example)
+        tmp = 1 + np.exp(-1 * np.dot(weights, example))
+        likelihood_term = 0
         if label > 0:
-            likelihood_term = np.log(1 / (1 + np.exp(-1 * np.dot(weights, norm_example))))
-        else:
-            likelihood_term = np.log(1 - (1 / (1 + np.exp(-1 * np.dot(weights, norm_example)))))
+            likelihood_term = np.log(1 / tmp)
+        elif label < 0 and tmp != 1:
+            likelihood_term = np.log(1 - (1 / tmp))
         return likelihood_term
 
     def _log_regression(self, weights, examples, labels):
@@ -47,17 +49,13 @@ class LogisticRegression(object):
         return -likelihood_sum + self.c * 0.5 * np.linalg.norm(weights, 2)**2
 
     def _minimize_log_regression_func(self, examples, labels, initial_weights):
-        self._trained_weight_vector = fmin_powell(
+        self._optimal_weight_vector = fmin_powell(
             func=self._log_regression,
             x0=initial_weights,
             args=(examples, labels),
             disp=False
         )
-        self._trained_weight_vector = np.array(self._trained_weight_vector)
-
-    def _normalize(self, example):
-        normalized_example = (example - self._mean) / self._std
-        return np.append(normalized_example, [1])
+        self._optimal_weight_vector = np.array(self._optimal_weight_vector)
 
     def train(self, examples, labels, schema=None):
         self._mean = np.mean(examples, 0)
@@ -72,7 +70,7 @@ class LogisticRegression(object):
         :type example: ndarray
         :return:
         """
-        certainty = 1 / (1 + np.exp(-np.dot(self._trained_weight_vector, self._normalize(example))))
+        certainty = 1 / (1 + np.exp(-np.dot(self._optimal_weight_vector, example)))
         prediction = 1.0 if certainty > 0.5 else -1.0
         return prediction, certainty
 
@@ -88,5 +86,6 @@ if __name__ == "__main__":
 
     example_set = parse_c45(args.data_file_name, DATA_DIRECTORY)
     data_set = np.array(example_set.to_float())
+    normalize(data_set, example_set.schema)
     results = LogisticRegression.solve(data_set, args.lambda_value)
     print_performance(results)

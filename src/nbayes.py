@@ -4,7 +4,7 @@ from mldata import parse_c45
 import numpy as np
 import os
 import training
-from utils import timing, print_performance
+from utils import timing, print_performance, normalize
 
 DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), '../data/')
 
@@ -41,7 +41,7 @@ class NaiveBayes(object):
         total_labels = float(len(class_labels))
 
         self._prob_pos_y = num_pos_labels / total_labels
-        self._prob_neg_y = (total_labels - num_pos_labels) / total_labels
+        self._prob_neg_y = 1 - self._prob_pos_y
 
         for feature_index, feature in enumerate(schema):
             feature_set = [example[feature_index] for example in examples]
@@ -197,5 +197,6 @@ if __name__ == '__main__':
     for feature in example_set.schema[1:-1]:
         if feature.type == 'NOMINAL':
             feature.values = tuple([feature.to_float(value) for value in feature.values])
+    normalize(data_set, example_set.schema)
     results = NaiveBayes.solve(data_set, example_set.schema[1:-1], args.m_estimate)
     print_performance(results)

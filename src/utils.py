@@ -3,7 +3,7 @@ import numpy as np
 
 
 def get_random_initial_weights(examples):
-    return np.random.rand(examples.shape[1] + 1) * .001
+    return np.random.rand(examples.shape[1]) * .01
 
 
 def timing(f):
@@ -33,12 +33,13 @@ def get_recall(num_true_positives, num_false_negatives):
     return num_true_positives / (num_true_positives + num_false_negatives)
 
 
-def normalize(data):
+def normalize(data, schema):
     stds = data.std(axis=0)
     means = data.mean(axis=0)
-    for example in range(0, len(data)):
-        for i in range(1, data[example].size - 1):
-            data[example][i] = (data[example][i] - means[i]) / stds[i]
+    for example_index in range(0, len(data)):
+        for i in range(1, data[example_index].size - 1):
+            if schema.features[i].type == 'CONTINUOUS':
+                data[example_index][i] = (data[example_index][i] - means[i]) / stds[i]
     return data
 
 
