@@ -46,15 +46,17 @@ class LogisticRegression(object):
         for example, label in zip(examples, labels):
             likelihood_sum += self._conditional_log_likelihood(example, label, weights)
 
-        return -likelihood_sum + self.c * 0.5 * np.linalg.norm(weights, 2)**2
+        return -likelihood_sum + self.c * 0.5 * np.linalg.norm(weights, 2)**2  # from assignment prob. description
 
     def _minimize_log_regression_func(self, examples, labels, initial_weights):
         self._optimal_weight_vector = fmin_powell(
             func=self._log_regression,
             x0=initial_weights,
             args=(examples, labels),
-            disp=False
+            xtol=0.1,
+            ftol=0.1
         )
+
         self._optimal_weight_vector = np.array(self._optimal_weight_vector)
 
     def train(self, examples, labels, schema=None):

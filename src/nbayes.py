@@ -109,8 +109,9 @@ class NaiveBayes(object):
                 neg_bin[feature_value] += 1
                 num_neg_class += 1.0
 
-        m = NaiveBayes.get_smoothing_estimate(self.m_estimate, len(nominal_values))
-        prior = 1 / float(len(nominal_values))
+        v = len(nominal_values)
+        m = self.get_smoothing_estimate(v)
+        prior = 1 / float(v)
 
         for nominal_value in nominal_values:
             pos_bin[nominal_value] = (pos_bin[nominal_value] + m * prior) / (num_pos_class + m)
@@ -124,8 +125,7 @@ class NaiveBayes(object):
 
         return summary
 
-    @staticmethod
-    def train_continuous_feature(feature_set, labels):
+    def train_continuous_feature(self, feature_set, labels):
         """
         Returns the probabilities/statistics of a class label associated with examples of a continuous feature.
         :param feature_set: contains all the values in the training set for a particular feature
@@ -151,11 +151,11 @@ class NaiveBayes(object):
         pos_variance = sum([(v - pos_mean)**2 for v in positive_bin]) / num_pos_class
         neg_variance = sum([(v - neg_mean)**2 for v in negative_bin]) / num_neg_class
 
-        pos_variance = 0.01 if pos_variance < .01 else pos_variance
-        neg_variance = 0.01 if neg_variance < .01 else neg_variance
+        pos_variance = 0.01 if pos_variance < 0.01 else pos_variance
+        neg_variance = 0.01 if neg_variance < 0.01 else neg_variance
 
         summary = locals()  # places all variables in this scope into a dictionary
-        summary['get_conditional_prob'] = lambda e: NaiveBayes.get_continuous_conditional_probability(e, summary)
+        summary['get_conditional_prob'] = lambda e: self.get_continuous_conditional_probability(e, summary)
         return summary
 
     @staticmethod
@@ -173,18 +173,16 @@ class NaiveBayes(object):
         prob_neg = 1 / (2 * pi * neg_sig2)**0.5 * exp(-0.5 * (feature_value - neg_mu)**2 / neg_sig2)
         return prob_pos, prob_neg
 
-    @staticmethod
-    def get_smoothing_estimate(m_estimate, number_of_values):
+    def get_smoothing_estimate(self, number_of_values):
         """
         Returns a Laplace smoothing estimate if m_estimate is negative
-        :param m_estimate:
         :param number_of_values:
         :return:
         """
-        if m_estimate < 0:
+        if self.m_estimate < 0:
             return number_of_values
         else:
-            return m_estimate
+            return self.m_estimate
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="A Naive-Bayes Classifier Implementation.")
