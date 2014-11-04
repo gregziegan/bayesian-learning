@@ -3,7 +3,8 @@ import numpy as np
 
 
 def get_random_initial_weights(examples):
-    return np.random.rand(examples.shape[1]) * .01
+    random = np.random.RandomState(seed=12345)
+    return random.rand(examples.shape[1]) * 0.1
 
 
 def timing(f):
