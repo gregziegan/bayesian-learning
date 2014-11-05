@@ -46,15 +46,12 @@ def normalize(data, schema):
 
 
 def contingency_table(predictions, class_labels, threshold):
-    tp = 0
-    fn = 0
-    fp = 0
-    tn = 0
-    for pred, cl in zip(predictions, class_labels):
-        confidence = pred >= threshold
-        if cl == 1.0 and confidence:
+    tp, fn, fp, tn = 0, 0, 0, 0
+    for prediction, class_label in zip(predictions, class_labels):
+        confidence = prediction >= threshold
+        if class_label == 1.0 and confidence:
             tp += 1
-        elif cl == 1.0:
+        elif class_label == 1.0:
             fn += 1
         elif confidence:
             fp += 1
