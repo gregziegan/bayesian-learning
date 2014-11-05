@@ -1,6 +1,5 @@
 import time
 import numpy as np
-import sys
 
 
 def get_random_initial_weights(examples):
@@ -61,12 +60,12 @@ def contingency_table(predictions, class_labels, threshold):
 
 
 @timing
-def get_area_under_roc(p, class_labels):
-    p, class_labels = zip(*sorted(zip(p, class_labels), reverse=True))
+def get_area_under_roc(predictions, class_labels):
+    predictions, class_labels = zip(*sorted(zip(predictions, class_labels), reverse=True))
     fp_rate, tp_rate = [0.0], [0.0]
 
-    for confidence in p:
-        true_p, false_n, false_p, true_n = contingency_table(p, class_labels, confidence)
+    for confidence in predictions:
+        true_p, false_n, false_p, true_n = contingency_table(predictions, class_labels, confidence)
         if false_p:
             fp_rate.append(false_p / float(false_p + true_n))
         else:
@@ -128,6 +127,6 @@ def print_performance(results):
         print 'Warning: this algorithm was run on a large data set.'
         print 'An AROC calculation will take n^2 time.'
 
-        response = raw_input('Would you still like to calculate the area under the ROC curve? (Y/n)')
+        response = raw_input('Would you still like to calculate the area under the ROC curve? (Y/n): ')
         if response in ['Y', 'y']:
             print "AROC: {:0.3f}".format(get_area_under_roc(all_predictions, labels))

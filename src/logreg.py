@@ -53,6 +53,7 @@ class LogisticRegression(object):
             func=self._log_regression,
             x0=initial_weights,
             args=(examples, labels),
+            disp=False,
             xtol=0.1,
             ftol=0.1
         )
