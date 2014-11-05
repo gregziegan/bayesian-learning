@@ -61,9 +61,9 @@ def contingency_table(predictions, class_labels, threshold):
             tn += 1
     return tp, fn, fp, tn
 
+
 def print_performance(results):
     num_true_positives, num_false_positives, num_true_negatives, num_false_negatives = 0.0, 0.0, 0.0, 0.0
-    roc = {}
     tp = []
     tn = []
     fp = []
@@ -102,13 +102,13 @@ def print_performance(results):
     p, cl = zip(*sorted(zip(p, cl), reverse=True))
 
     for confidence in p:
-        truep, falsen, falsep, truen = contingency_table(p, cl, confidence)
-        if falsep:
-            fp_rate.append(falsep / float(falsep + truen))
+        true_p, false_n, false_p, true_n = contingency_table(p, cl, confidence)
+        if false_p:
+            fp_rate.append(false_p / float(false_p + true_n))
         else:
             fp_rate.append(0.0)
-        if truep:
-            tp_rate.append(truep/ float(truep + falsen))
+        if true_p:
+            tp_rate.append(true_p / float(true_p + false_n))
         else:
             tp_rate.append(0.0)
 
