@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import sys
 
 
 def get_random_initial_weights(examples):
@@ -62,39 +63,13 @@ def contingency_table(predictions, class_labels, threshold):
     return tp, fn, fp, tn
 
 
-def print_performance(results):
-    num_true_positives, num_false_positives, num_true_negatives, num_false_negatives = 0.0, 0.0, 0.0, 0.0
-    fp_rate = [0.0]
-    tp_rate = [0.0]
-    accuracies, precisions, recalls = [], [], []
-    p = []
-    cl = []
-    for result in results:
-        predictions, class_labels = result['predictions'], result['class_labels']
-        for prediction_tuple, class_label in zip(predictions, class_labels):
-            prediction, certainty = prediction_tuple
-            p.append(certainty)
-            cl.append(class_label)
-            if prediction > 0:
-                if class_label > 0:
-                    num_true_positives += 1
-                else:
-                    num_false_positives += 1
-            else:
-                if class_label <= 0:
-                    num_true_negatives += 1
-                else:
-                    num_false_negatives += 1
-
-            accuracies.append(get_accuracy(num_true_positives, num_false_positives,
-                                           num_true_negatives, num_false_negatives))
-            precisions.append(get_precision(num_true_positives, num_false_positives))
-            recalls.append(get_recall(num_true_positives, num_false_negatives))
-
-    p, cl = zip(*sorted(zip(p, cl), reverse=True))
+@timing
+def get_area_under_roc(p, class_labels):
+    p, class_labels = zip(*sorted(zip(p, class_labels), reverse=True))
+    fp_rate, tp_rate = [0.0], [0.0]
 
     for confidence in p:
-        true_p, false_n, false_p, true_n = contingency_table(p, cl, confidence)
+        true_p, false_n, false_p, true_n = contingency_table(p, class_labels, confidence)
         if false_p:
             fp_rate.append(false_p / float(false_p + true_n))
         else:
@@ -108,7 +83,54 @@ def print_performance(results):
     for point_one, point_two in zip(zip(fp_rate[0:-1], tp_rate[0:-1]), zip(fp_rate[1:], tp_rate[1:])):
         aroc += ((point_two[0] - point_one[0]) * (point_two[1] + point_one[1])) / 2.0
 
+    return aroc
+
+
+def print_performance(results):
+    num_true_positives, num_false_positives, num_true_negatives, num_false_negatives = 0.0, 0.0, 0.0, 0.0
+    tp, tn, fp, fn = [], [], [], []
+    accuracies, precisions, recalls = [], [], []
+
+    ##  ROC calculation arguments ##
+    all_predictions = []
+    labels = []
+
+    for result in results:
+        predictions, class_labels = result['predictions'], result['class_labels']
+        for prediction_tuple, class_label in zip(predictions, class_labels):
+            prediction, certainty = prediction_tuple
+            if prediction > 0:
+                if class_label > 0:
+                    num_true_positives += 1
+                else:
+                    num_false_positives += 1
+            else:
+                if class_label <= 0:
+                    num_true_negatives += 1
+                else:
+                    num_false_negatives += 1
+            tp.append(num_true_positives)
+            tn.append(num_true_negatives)
+            fp.append(num_false_positives)
+            fn.append(num_false_negatives)
+
+            accuracies.append(get_accuracy(num_true_positives, num_false_positives,
+                                           num_true_negatives, num_false_negatives))
+            precisions.append(get_precision(num_true_positives, num_false_positives))
+            recalls.append(get_recall(num_true_positives, num_false_negatives))
+
+            # Below are lists used for ROC calculation
+            all_predictions.append(certainty)
+            labels.append(class_label)
+
     print "Accuracy: {:0.3f} {:0.3f}".format(np.mean(accuracies), np.std(accuracies))
     print "Precision: {:0.3f} {:0.3f}".format(np.mean(precisions), np.std(precisions))
     print "Recall: {:0.3f} {:0.3f}".format(np.mean(recalls), np.std(recalls))
-    print "AROC: {:0.3f}".format(aroc)
+
+    if len(all_predictions) > 10000:
+        print 'Warning: this algorithm was run on a large data set.'
+        print 'An AROC calculation will take n^2 time.'
+
+        response = raw_input('Would you still like to calculate the area under the ROC curve? (Y/n)')
+        if response in ['Y', 'y']:
+            print "AROC: {:0.3f}".format(get_area_under_roc(all_predictions, labels))
